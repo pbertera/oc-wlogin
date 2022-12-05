@@ -25,16 +25,16 @@ import urllib.parse
 import json
 import ast
 from requests_oauthlib import OAuth2Session
+import os
 
 web.config.debug = False
 
-import os
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-client_id = "demo"
-client_secret = "123abc"
-authorization_base_url = 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
-token_url = 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
+client_id = os.environ['OC_WLOGIN_CLIENT_ID']
+client_secret = os.environ['OC_WLOGIN_CLIENT_SECRET']
+authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL'] #'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
+token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
 
 urls = (
     '/login/(.*)', 'Login',
