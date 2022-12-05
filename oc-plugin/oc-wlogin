@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ -n $1 ]; then
+  echo USAGE: $0 API_URL
+  exit -1
+fi
+
+TOKEN_ISSUER='http://127.0.0.1:5000'
+
+OID_DATA=$(curl -s ${TOKEN_ISSUER}/login/cli)
+AUTH_URL=$(echo $OID_DATA | jq -r .authorization_url)
+AUTH_STATE=$(echo $OID_DATA | jq -r .state)
+
+echo "Please visit $AUTH_URL in order to authenticate"
+
+n=0
+until [ "$n" -ge 15 ]
+do
+   TOKEN_RESP=$(curl --fail -s ${TOKEN_ISSUER}/token/${AUTH_STATE}) && break  # substitute your command here
+   n=$((n+1)) 
+   sleep 2
+done
+
+EXPIRES=$(echo $TOKEN_RESP | jq -r .expires_in)
+TOKEN=$(echo $TOKEN_RESP | jq -r .access_token)
+echo "Token retrieved, will expire in $EXPIRES seconds"
+
+oc login --token "$TOKEN" $1
