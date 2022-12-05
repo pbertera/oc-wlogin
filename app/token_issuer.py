@@ -30,11 +30,20 @@ import os
 web.config.debug = False
 
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
+# TODO: check envs
 client_id = os.environ['OC_WLOGIN_CLIENT_ID']
 client_secret = os.environ['OC_WLOGIN_CLIENT_SECRET']
 authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL'] #'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
 token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
+tls_cert = os.environ['OC_WLOGIN_TLS_CERT']
+tls_key = os.environ['OC_WLOGIN_TLS_KEY']
+
+from cheroot.server import HTTPServer
+from cheroot.ssl.builtin import BuiltinSSLAdapter
+
+HTTPServer.ssl_adapter = BuiltinSSLAdapter(
+        certificate=tls_cert,
+        private_key=tls_key)
 
 urls = (
     '/login/(.*)', 'Login',
