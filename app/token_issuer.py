@@ -37,6 +37,7 @@ authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL'] #'https://oauth-opensh
 token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
 tls_cert = os.environ['OC_WLOGIN_TLS_CERT']
 tls_key = os.environ['OC_WLOGIN_TLS_KEY']
+ca_bundle = os.environ['OC_WLOGIN_CA_BUNDLE']
 
 from cheroot.server import HTTPServer
 from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -65,8 +66,9 @@ session = web.session.Session(app, web.session.DiskStore('sessions'), initialize
 class Login:
     def GET(self, consumer=None):
         session.oauth_state = ''
+        params = web.input(idp=None)
         oauth_server = OAuth2Session(client_id)
-        authorization_url, state = oauth_server.authorization_url(authorization_base_url)
+        authorization_url, state = oauth_server.authorization_url(authorization_base_url, idp=params.idp)
         setattr(web.ctx.globals, state, '{}')
         if consumer == 'cli':
             return json.dumps({ 'authorization_url': authorization_url, 'state': state })
@@ -80,8 +82,12 @@ class Callback:
             data = web.input()
             state = data.state
         oauth_server = OAuth2Session(client_id, state=state)
+        if ca_bundle:
+            verify = ca_bundle
+        else:
+            verify = false
         token = oauth_server.fetch_token(token_url, client_secret=client_secret,
-                                   authorization_response=web.ctx.home + '/' + web.ctx.fullpath, verify=False) #FIXME
+                                   authorization_response=web.ctx.home + '/' + web.ctx.fullpath, verify=verify)
         token_json = json.dumps(ast.literal_eval("%s" % token))
         setattr(web.ctx.globals, state, token_json)
         session.kill()
