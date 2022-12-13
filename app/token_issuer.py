@@ -24,6 +24,7 @@ import web
 import urllib.parse
 import json
 import ast
+import oauthlib.oauth2.rfc6749.errors as OauthErrors
 from requests_oauthlib import OAuth2Session
 import os
 
@@ -38,6 +39,11 @@ token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pb
 tls_cert = os.environ['OC_WLOGIN_TLS_CERT']
 tls_key = os.environ['OC_WLOGIN_TLS_KEY']
 ca_bundle = os.environ['OC_WLOGIN_CA_BUNDLE']
+
+if 'OC_WLOGIN_SESSIONS_DIR' in os.environ:
+    sessions_dir = os.environ['OC_WLOGIN_SESSIONS_DIR']
+else:
+    sessions_dir = '/tmp/sessions'
 
 from cheroot.server import HTTPServer
 from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -61,7 +67,8 @@ def add_global_hook():
 
 app = web.application(urls, globals())
 app.add_processor(add_global_hook())
-session = web.session.Session(app, web.session.DiskStore('sessions'), initializer={'oauth_state': ''})
+session = web.session.Session(app, web.session.DiskStore(sessions_dir), initializer={'oauth_state': ''})
+render = web.template.render('templates/')
 
 class Login:
     def GET(self, consumer=None):
@@ -86,12 +93,15 @@ class Callback:
             verify = ca_bundle
         else:
             verify = false
-        token = oauth_server.fetch_token(token_url, client_secret=client_secret,
+        try:
+            token = oauth_server.fetch_token(token_url, client_secret=client_secret,
                                    authorization_response=web.ctx.home + '/' + web.ctx.fullpath, verify=verify)
+        except OauthErrors.UnauthorizedClientError as e:
+            return render.error("Error retriving the token: %s" % e)
         token_json = json.dumps(ast.literal_eval("%s" % token))
         setattr(web.ctx.globals, state, token_json)
         session.kill()
-        return(token_json)
+        return render.callback(state)
 
 class Token:
     def GET(self, state):
@@ -102,7 +112,7 @@ class Token:
         except AttributeError:
             raise web.notfound("Token Not Found")
         delattr(web.ctx.globals, state)
-        return token
+        return render.token(token)
 
 if __name__ == "__main__":
     app.run()
