@@ -56,7 +56,7 @@ urls = (
     '/login/(.*)', 'Login',
     '/callback', 'Callback',
     '/token/(.*)', 'Token',
-    '//healthz', 'Healthz'
+    '/healthz', 'Healthz'
 )
 
 def add_global_hook():
