@@ -55,7 +55,8 @@ HTTPServer.ssl_adapter = BuiltinSSLAdapter(
 urls = (
     '/login/(.*)', 'Login',
     '/callback', 'Callback',
-    '/token/(.*)', 'Token'
+    '/token/(.*)', 'Token',
+    '//healthz', 'Healthz'
 )
 
 def add_global_hook():
@@ -113,6 +114,10 @@ class Token:
             raise web.notfound("Token Not Found")
         delattr(web.ctx.globals, state)
         return render.token(token)
+
+class Healthz:
+    def GET(self)
+        return "{'status':'ok'}'
 
 if __name__ == "__main__":
     app.run()
