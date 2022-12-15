@@ -116,7 +116,7 @@ class Token:
         return render.token(token)
 
 class Healthz:
-    def GET(self)
+    def GET(self):
         return "{'status':'ok'}'
 
 if __name__ == "__main__":
