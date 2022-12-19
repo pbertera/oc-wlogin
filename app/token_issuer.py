@@ -106,6 +106,7 @@ class Callback:
 
 class Token:
     def GET(self, state):
+        params = web.input(display=False)
         try:
             token = getattr(web.ctx.globals, state)
             if token == '{}':
@@ -113,7 +114,10 @@ class Token:
         except AttributeError:
             raise web.notfound("Token Not Found")
         delattr(web.ctx.globals, state)
-        return render.token(token)
+        if params.display:
+            return render.token(token)
+        else:
+            return token
 
 class Healthz:
     def GET(self):
