@@ -28,12 +28,12 @@ else:
     bailout('OC_WLOGIN_CLIENT_SECRET node defined')
 
 if 'OC_WLOGIN_AUTH_URL' in os.environ:
-    authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL'] #'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
+    authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL']
 else:
     bailout('OC_WLOGIN_AUTH_URL not defined')
 
 if 'OC_WLOGIN_TOKEN_URL' in os.environ:
-    token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
+    token_url = os.environ['OC_WLOGIN_TOKEN_URL']
 else:
     bailout('OC_WLOGIN_TOKEN_URL not defined')
 
