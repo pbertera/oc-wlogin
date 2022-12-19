@@ -7,14 +7,14 @@ ocWloginClientId: "ocwlogin"
 # The OAuth client Password
 ocWloginClientSecret: "Gm.am1k3maask819s-Hasasl12"
 # The URL of the wlogin app, is also used as host for the created Route
-ocWloginUrl: "oc-wlogin-oc-wlogin.apps.pberteramfa.lab.upshift.rdu2.redhat.com"
+ocWloginUrl: "oc-wlogin-oc-wlogin.apps.example.com"
 # The protocol used to expose the route, use https if a 'route.tls' section is defined
 ocWloginProtocol: "https"
 # The OAuth Server Authorizaion and Token URLs, you can get them with:
 # `curl -sk $(oc get infrastructures.config.openshift.io cluster -o yaml -o jsonpath='{.status.apiServerURL}')/.well-known/oauth-authorization-server | jq '{'auth': .authorization_endpoint, 'token': .token_endpoint}'`
 ocWloginOauthUrls:
-  authorize: "https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize"
-  token: "https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token"
+  authorize: "https://oauth-openshift.apps.example.com/oauth/authorize"
+  token: "https://oauth-openshift.apps.example.com/oauth/token"
 # Where to save the web sessions
 ocWloginSessionsDir: "/tmp/oc-wlogin-sessions"
 
