@@ -4,11 +4,16 @@ import ast
 import json
 import oauthlib.oauth2.rfc6749.errors as OauthErrors
 import os
+import sys
 import urllib.parse
 import web
 from requests_oauthlib import OAuth2Session
 
 web.config.debug = False
+
+def bailout(error):
+    print('ERROR: %s' % error)
+    sys.exit(255)
 
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -34,14 +39,13 @@ else:
 
 if 'OC_WLOGIN_TLS_CERT' in os.environ:
     tls_cert = os.environ['OC_WLOGIN_TLS_CERT']
+    if 'OC_WLOGIN_TLS_KEY' in os.environ:
+        tls_key = os.environ['OC_WLOGIN_TLS_KEY']
+    else:
+        bailout('OC_WLOGIN_TLS_KEY not defined')
 else:
     tls_cert = None
     #bailout('OC_WLOGIN_TLS_CERT not defined')
-
-if 'OC_WLOGIN_TLS_KEY' in os.environ:
-    tls_key = os.environ['OC_WLOGIN_TLS_KEY']
-else:
-    bailout('OC_WLOGIN_TLS_KEY not defined')
 
 if 'OC_WLOGIN_CA_BUNDLE' in os.environ:
     ca_bundle = os.environ['OC_WLOGIN_CA_BUNDLE']
