@@ -1,0 +1,9 @@
+1. Download the OpenShift client (oc) plugin at https://raw.githubusercontent.com/pbertera/oc-wlogin/main/oc-plugin/oc-wlogin
+2. Save it into the $PATH
+3. You can now login using the browser with:
+{{- range $host := .Values.route.hosts }}
+  {{- range .paths }}
+  export TOKEN_ISSUER="http{{ if $.Values.route.tls }}s{{ end }}://{{ $host.host }}{{ .path }}"
+  {{- end }}
+{{- end }}
+  oc wlogin -t $TOKEN_ISSUER <API-URL>

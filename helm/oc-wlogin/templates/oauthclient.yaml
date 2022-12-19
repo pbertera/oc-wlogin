@@ -1,0 +1,8 @@
+apiVersion: oauth.openshift.io/v1
+grantMethod: auto
+kind: OAuthClient
+metadata:
+  name: {{ .Values.ocWloginClientId }}
+redirectURIs:
+  - {{ .Values.ocWloginProtocol }}://{{ .Values.ocWloginUrl }}/callback 
+secret: {{ .Values.ocWloginClientSecret }}

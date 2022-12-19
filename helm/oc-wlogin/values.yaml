@@ -1,0 +1,73 @@
+# Default values for oc-wlogin.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# The OAuth client ID
+ocWloginClientId: "ocwlogin"
+# The OAuth client Password
+ocWloginClientSecret: "Gm.am1k3maask819s-Hasasl12"
+# The URL of the wlogin app, is also used as host for the created Route
+ocWloginUrl: "oc-wlogin-oc-wlogin.apps.pberteramfa.lab.upshift.rdu2.redhat.com"
+# The protocol used to expose the route, use https if a 'route.tls' section is defined
+ocWloginProtocol: "https"
+# The OAuth Server Authorizaion and Token URLs, you can get them with:
+# `curl -sk $(oc get infrastructures.config.openshift.io cluster -o yaml -o jsonpath='{.status.apiServerURL}')/.well-known/oauth-authorization-server | jq '{'auth': .authorization_endpoint, 'token': .token_endpoint}'`
+ocWloginOauthUrls:
+  authorize: "https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize"
+  token: "https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token"
+# Where to save the web sessions
+ocWloginSessionsDir: "/tmp/oc-wlogin-sessions"
+
+ocWloginCerts:
+  # The CA bundle trusint the OAuth Server Authorizaion and Token URLs, should be the ingress CA.
+  # The default CA certificate can be extracted with:
+  # `oc extract secret/router-ca -n openshift-ingress-operator --confirm`
+  caBundle: "certs/ca-bundle.crt"
+  # If the wlogin app should use TLS or not
+  tls: true
+  # if 'tls' is you can let the serving certtificate controller to inject a certificate
+  injectTlsCert: true
+  # or you can define your own certificate the app should use 
+  tlsCert: "certs/tls.crt"
+  tlsKey: "certs/tls.key"
+
+podAnnotations: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+  portName: 8080-tcp
+  targetPort: 8080
+
+route:
+  enabled: true
+  annotations: {}
+  # If the wlogin application uses a TLS certificate the route 'termination` must be `reencrypt` or `passthrough`
+  tls:
+    termination: "reencrypt"
+
+replicaCount: 1
+
+image:
+  repository: quay.io/pbertera/oc-wlogin
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+resources: {}
+  # limits:
+  #   cpu: 30m
+  #   memory: 30Mi
+  # requests:
+  #   cpu: 30m
+  #   memory: 30Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

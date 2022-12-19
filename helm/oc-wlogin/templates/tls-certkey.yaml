@@ -1,0 +1,14 @@
+{{ if .Values.ocWloginCerts.tls -}}
+{{ if not .Values.ocWloginCerts.injectTlsCert -}}
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: tls-certkey
+data:
+  tls.crt: |-
+    {{ .Files.Get .Values.ocWloginCerts.tlsCert | b64enc }}
+  tls.key: |-
+    {{ .Files.Get .Values.ocWloginCerts.tlsKey | b64enc }}
+{{- end }}
+{{- end }}

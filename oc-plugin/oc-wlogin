@@ -1,28 +1,106 @@
 #!/bin/bash
 
-if [ -n $1 ]; then
-  echo USAGE: $0 API_URL
+usage(){
+  if [ -z $1 ]; then
+    cat << EOF
+USAGE: $0 [options] <API_URL>
+
+Available Options:
+
+-t, --token-issuer='': Token Issuer application URL (required if TOKEN_ISSUER is not defined)
+-t, --idp='': The identity provider to be used (optional)
+-c, --curl-opts='': curl(1) options to use when invoking the executable, default is '-s'
+EOF
+    exit -1
+  fi
+}
+
+bailout(){
+  echo "ERROR: $@"
   exit -1
-fi
+}
 
-TOKEN_ISSUER='http://127.0.0.1:5000'
+CURL_OPTS='-s'
 
-OID_DATA=$(curl -s ${TOKEN_ISSUER}/login/cli)
-AUTH_URL=$(echo $OID_DATA | jq -r .authorization_url)
-AUTH_STATE=$(echo $OID_DATA | jq -r .state)
+echo $@
 
-echo "Please visit $AUTH_URL in order to authenticate"
+while [[ $# -gt 1 ]]; do
+  KEY="$1"
+  case $KEY in
+    -t|--token-issuer)
+    TOKEN_ISSUER="$2"
+    shift; shift
+    ;;
 
-n=0
-until [ "$n" -ge 15 ]
-do
-   TOKEN_RESP=$(curl --fail -s ${TOKEN_ISSUER}/token/${AUTH_STATE}) && break  # substitute your command here
-   n=$((n+1)) 
-   sleep 2
+    -i|--idp)
+    IDP="$2"
+    shift; shift
+    ;;
+
+    -c|--curl-opts)
+    CURL_OPTS="$2"
+    shift; shift
+    ;;
+
+    *)
+    usage
+    ;;
+  esac
 done
 
-EXPIRES=$(echo $TOKEN_RESP | jq -r .expires_in)
-TOKEN=$(echo $TOKEN_RESP | jq -r .access_token)
+API_URL="$1"
+OC=$(which oc)
+JQ=$(which jq)
+
+if [ -z "$API_URL" ]; then
+  bailout "API URL is not defined"
+fi
+
+if [ -z "$TOKEN_ISSUER" ]; then
+  bailout "Token Issuer URL is not defined"
+fi
+
+if [ -z "$OC" ]; then
+  bailout "OpenShift client (oc) binary is missing"
+fi
+
+if [ -z "$JQ" ]; then
+  bailout "JQ binary is missing"
+fi
+
+OID_DATA=$(curl $CURL_OPTS ${TOKEN_ISSUER}/login/cli)
+AUTH_URL=$(echo $OID_DATA | $JQ -r .authorization_url)
+AUTH_STATE=$(echo $OID_DATA | $JQ -r .state)
+
+echo "Please visit the following URL in order to authenticate:"
+echo
+echo  "$AUTH_URL"
+echo
+
+spin='-\|/'
+n=0; i=0; c=0
+
+until [ "$n" -ge 30 ]
+do
+  if [ $(( c%10 )) -eq 0 ]; then
+    TOKEN_RESP=$(curl --fail $CURL_OPTS ${TOKEN_ISSUER}/token/${AUTH_STATE}) && break
+    n=$(( n+1 ))
+  fi
+  c=$(( c+1 ))
+  i=$(( (i+1) %4 )) 
+  printf "\r${spin:$i:1}"
+  sleep .1
+done
+
+
+if [ "$TOKEN_RESP" == "" ]; then
+  echo "Failure getting the token"
+  exit 255
+fi
+
+EXPIRES=$(echo $TOKEN_RESP | $JQ -r .expires_in)
+TOKEN=$(echo $TOKEN_RESP | $JQ -r .access_token)
+echo
 echo "Token retrieved, will expire in $EXPIRES seconds"
 
-oc login --token "$TOKEN" $1
+$OC login --token "$TOKEN" $API_URL
