@@ -1,56 +1,66 @@
 #!/usr/bin/python
 
-# >>> client_id='openshift-browser-client'
-#>>> scopes = []
-#>>> auth_url = 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
-#>>> from oauthlib.oauth2 import MobileApplicationClient
-#>>> from requests_oauthlib import OAuth2Session
-#>>> oauth = OAuth2Session(client=MobileApplicationClient(client_id=client_id), scope=scopes)
-#>>> authorization_url, state = oauth.authorization_url(auth_url)
-#>>> print(authorization_url)
-# https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize?response_type=token&client_id=openshift-browser-client&state=AFGgTNC8Hwh9iQwzObqhObHMifnApR
-
-#kind: OAuthClient
-#apiVersion: oauth.openshift.io/v1
-#metadata:
-# name: demo 
-#secret: "123abc" 
-#redirectURIs:
-# - "http://127.0.0.1:8080/token" 
-#grantMethod: auto
-
-
-import web
-import urllib.parse
-import json
 import ast
+import json
 import oauthlib.oauth2.rfc6749.errors as OauthErrors
-from requests_oauthlib import OAuth2Session
 import os
+import urllib.parse
+import web
+from requests_oauthlib import OAuth2Session
 
 web.config.debug = False
 
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-# TODO: check envs
-client_id = os.environ['OC_WLOGIN_CLIENT_ID']
-client_secret = os.environ['OC_WLOGIN_CLIENT_SECRET']
-authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL'] #'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
-token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
-tls_cert = os.environ['OC_WLOGIN_TLS_CERT']
-tls_key = os.environ['OC_WLOGIN_TLS_KEY']
-ca_bundle = os.environ['OC_WLOGIN_CA_BUNDLE']
+
+if 'OC_WLOGIN_CLIENT_ID' in os.environ:
+    client_id = os.environ['OC_WLOGIN_CLIENT_ID']
+else:
+    bailout('OC_WLOGIN_CLIENT_ID not defined')
+
+if 'OC_WLOGIN_CLIENT_SECRET' in os.environ:
+    client_secret = os.environ['OC_WLOGIN_CLIENT_SECRET']
+else:
+    bailout('OC_WLOGIN_CLIENT_SECRET node defined')
+
+if 'OC_WLOGIN_AUTH_URL' in os.environ:
+    authorization_base_url = os.environ['OC_WLOGIN_AUTH_URL'] #'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/authorize'
+else:
+    bailout('OC_WLOGIN_AUTH_URL not defined')
+
+if 'OC_WLOGIN_TOKEN_URL' in os.environ:
+    token_url = os.environ['OC_WLOGIN_TOKEN_URL'] # 'https://oauth-openshift.apps.pberteramfa.lab.upshift.rdu2.redhat.com/oauth/token'
+else:
+    bailout('OC_WLOGIN_TOKEN_URL not defined')
+
+if 'OC_WLOGIN_TLS_CERT' in os.environ:
+    tls_cert = os.environ['OC_WLOGIN_TLS_CERT']
+else:
+    tls_cert = None
+    #bailout('OC_WLOGIN_TLS_CERT not defined')
+
+if 'OC_WLOGIN_TLS_KEY' in os.environ:
+    tls_key = os.environ['OC_WLOGIN_TLS_KEY']
+else:
+    bailout('OC_WLOGIN_TLS_KEY not defined')
+
+if 'OC_WLOGIN_CA_BUNDLE' in os.environ:
+    ca_bundle = os.environ['OC_WLOGIN_CA_BUNDLE']
+else:
+    ca_bundle = False
 
 if 'OC_WLOGIN_SESSIONS_DIR' in os.environ:
     sessions_dir = os.environ['OC_WLOGIN_SESSIONS_DIR']
 else:
     sessions_dir = '/tmp/sessions'
 
-from cheroot.server import HTTPServer
-from cheroot.ssl.builtin import BuiltinSSLAdapter
 
-HTTPServer.ssl_adapter = BuiltinSSLAdapter(
-        certificate=tls_cert,
-        private_key=tls_key)
+if tls_cert:
+    from cheroot.server import HTTPServer
+    from cheroot.ssl.builtin import BuiltinSSLAdapter
+
+    HTTPServer.ssl_adapter = BuiltinSSLAdapter(
+            certificate=tls_cert,
+            private_key=tls_key)
 
 urls = (
     '/login/(.*)', 'Login',
@@ -90,13 +100,9 @@ class Callback:
             data = web.input()
             state = data.state
         oauth_server = OAuth2Session(client_id, state=state)
-        if ca_bundle:
-            verify = ca_bundle
-        else:
-            verify = false
         try:
             token = oauth_server.fetch_token(token_url, client_secret=client_secret,
-                                   authorization_response=web.ctx.home + '/' + web.ctx.fullpath, verify=verify)
+                                   authorization_response=web.ctx.home + '/' + web.ctx.fullpath, verify=ca_bundle)
         except OauthErrors.UnauthorizedClientError as e:
             return render.error("Error retriving the token: %s" % e)
         token_json = json.dumps(ast.literal_eval("%s" % token))

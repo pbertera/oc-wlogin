@@ -19,3 +19,15 @@ This project is a PoC consisting of:
 5. When the token is retrieved it is exposed on the `/token/$state_code` URL
 6. The `oc-wlogin` plugin can download the token, after the download is removed from the app memory
 7. The `oc-wlogin` plugin performs `oc login --token $token`
+
+## Application environment variables
+
+- `OC_WLOGIN_CLIENT_ID` the OAuth client ID
+- `OC_WLOGIN_CLIENT_SECRET` the OAuth client Secret
+- `OC_WLOGIN_AUTH_URL` the OAuth server Authorize URL
+- `OC_WLOGIN_TOKEN_URL` the OAuth server Token URL
+- `OC_WLOGIN_TLS_CERT` path to the TLS certificate used by the App
+- `OC_WLOGIN_TLS_KEY` path to the TLS certificate key used by the App
+- `OC_WLOGIN_CA_BUNDLE` the CA bunle to trusting the OAuth authorize and token URLs
+- `OC_WLOGIN_SESSIONS_DIR` path where the web sessions should be saved
+- `OAUTHLIB_INSECURE_TRANSPORT` if set do not verify the certificate of the OAuth authorize and token URLs
