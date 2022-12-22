@@ -31,3 +31,28 @@ This project is a PoC consisting of:
 - `OC_WLOGIN_CA_BUNDLE` the CA bunle to trusting the OAuth authorize and token URLs
 - `OC_WLOGIN_SESSIONS_DIR` path where the web sessions should be saved
 - `OAUTHLIB_INSECURE_TRANSPORT` if set do not verify the certificate of the OAuth authorize and token URLs
+
+## Installation
+
+1. Clone this git repo
+2. Configure the helm templates with proper `Values`
+3. Install the helm chart `helm install oc-wlogin helm/oc-wlogin/ --namespace oc-wlogin --create-namespace` (first configure the `values.yaml`
+4. Download the `oc-wlogin` plugin from https://raw.githubusercontent.com/pbertera/oc-wlogin/main/oc-plugin/oc-wlogin , save it into the `PATH` and make it executable
+
+Now you should have an `oc-wlogin` route created into the `oc-wlogin` namespace, you can test the app with the browser connecting to the route `/login/` URL.
+
+### oc wlogin usage
+
+The `oc-wlogin` plugin adds a new `wlogin` OpenShift CLI command:
+
+```
+$ oc wlogin --help
+USAGE: /var/home/pietro/bin/oc-wlogin [options] <API_URL>
+
+Available Options:
+
+-t, --token-issuer='': Token Issuer application URL (required if TOKEN_ISSUER is not defined)
+-t, --idp='': The identity provider to be used (optional)
+-c, --curl-opts='': curl(1) options to use when invoking the executable, default is '-s'
+-p, --poll-time='': Defines the maximum token poll time in seconds (default 30)
+```

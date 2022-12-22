@@ -10,6 +10,7 @@ Available Options:
 -t, --token-issuer='': Token Issuer application URL (required if TOKEN_ISSUER is not defined)
 -t, --idp='': The identity provider to be used (optional)
 -c, --curl-opts='': curl(1) options to use when invoking the executable, default is '-s'
+-p, --poll-time='': Defines the maximum token poll time in seconds (default 30)
 EOF
     exit -1
   fi
@@ -21,8 +22,12 @@ bailout(){
 }
 
 CURL_OPTS='-s'
+POLL_TIME='30'
 
-echo $@
+if [ $# -le 1 ]; then
+  usage
+  exit 255
+fi
 
 while [[ $# -gt 1 ]]; do
   KEY="$1"
@@ -42,8 +47,14 @@ while [[ $# -gt 1 ]]; do
     shift; shift
     ;;
 
+    -p|--poll-time)
+    POLL_TIME="$2"
+    shift; shift
+    ;;
+
     *)
     usage
+    exit 255
     ;;
   esac
 done
@@ -68,7 +79,14 @@ if [ -z "$JQ" ]; then
   bailout "JQ binary is missing"
 fi
 
-OID_DATA=$(curl $CURL_OPTS ${TOKEN_ISSUER}/login/cli)
+
+if [ "$IDP" != "" ]; then
+  IDP_QUERYSTRING="?idp=$IDP"
+else
+  IDP_QUERYSTRING=""
+fi
+
+OID_DATA=$(curl $CURL_OPTS ${TOKEN_ISSUER}/login/cli${IDP_QUERYSTRING})
 AUTH_URL=$(echo $OID_DATA | $JQ -r .authorization_url)
 AUTH_STATE=$(echo $OID_DATA | $JQ -r .state)
 
@@ -80,7 +98,7 @@ echo
 spin='-\|/'
 n=0; i=0; c=0
 
-until [ "$n" -ge 30 ]
+until [ "$n" -ge $POLL_TIME ]
 do
   if [ $(( c%10 )) -eq 0 ]; then
     TOKEN_RESP=$(curl --fail $CURL_OPTS ${TOKEN_ISSUER}/token/${AUTH_STATE}) && break
